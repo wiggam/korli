@@ -21,11 +21,6 @@ class LLMSummary(BaseModel):
     """Summary of the conversation for context management"""
     summary: str
 
-class LLMTopicValidation(BaseModel):
-    """Validation of the topic of the conversation"""
-    lightly_cleaned_topic: str = Field(..., description="A lightly-cleaned version of the topic")
-    valid_topic: bool = Field(..., description="True if the topic is valid, False otherwise")
-
 class LLMResponseCorrection(BaseModel):
     """Correction of the response of the student"""
     corrected_foreign_language: str = Field(..., description="The corrected message in the foreign language, or an empty string if the response was correct")

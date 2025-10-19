@@ -34,10 +34,6 @@ def llm_summary(**kwargs) -> ChatOpenAI:
     """Model for summarization."""
     return get_llm(_SUMMARY_MODEL, **kwargs)
 
-def llm_validation(**kwargs) -> ChatOpenAI:
-    """Model for lightweight validations (e.g., topic checks)."""
-    return get_llm(_VALIDATION_MODEL, **kwargs)
-
 def llm_response_correction(**kwargs) -> ChatOpenAI:
     """Model for response correction."""
     return get_llm(_RESPONSE_CORRECTION_MODEL, **kwargs)

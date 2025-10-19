@@ -24,7 +24,6 @@ class ChatState(MessagesState):
     native_language: Student's native language (for initialization)
     """
     # Initialization parameters (used to create prompt_helper)
-    topic: str
     student_level: Optional[str]
     foreign_language: Optional[str]
     native_language: Optional[str]
@@ -32,6 +31,5 @@ class ChatState(MessagesState):
     # Core state
     summary: str
     prompt_helper: Optional[Any]
-    valid_topic: Optional[bool]
     corrections: Dict[str, CorrectionRecord]
     

@@ -2,80 +2,33 @@
 
 from typing import Dict, Any, List, Optional
 from langchain_core.messages import SystemMessage, HumanMessage, RemoveMessage, BaseMessage, AIMessage
-from app.services.llm import llm_response, llm_summary, llm_validation, llm_response_correction
+from app.services.llm import llm_response, llm_summary, llm_response_correction
 from app.features.chat.state import ChatState, CorrectionRecord
 from app.features.chat.config import MESSAGES_BEFORE_SUMMARY, MESSAGES_TO_KEEP
 from app.features.prompts.chat.prompt_utils import ChatPromptHelper
-from app.features.chat.models import LLMTurn, LLMSummary, LLMTopicValidation, LLMResponseCorrection
-
+from app.features.chat.models import LLMTurn, LLMSummary, LLMResponseCorrection
+from app.services.language_validation import get_language_greeting
 
 def generate_initial_question(state: ChatState) -> Dict[str, Any]:
     """
-    Generate the opening question for the conversation.
+    Generate the opening greeting for the conversation.
     
-    Stores foreign language in message content, translation in metadata.
+    Uses pre-defined A1-level greetings from the language map.
+    The greeting is simple ("Hello! How are you?") and shown in both
+    the student's target (foreign) and native languages.
     """
     prompt_helper: ChatPromptHelper = state["prompt_helper"]
     
     # Build messages specifically for initial question generation
-    messages: List[BaseMessage] = [
-        SystemMessage(content=prompt_helper.system_prompt),
-        HumanMessage(content=prompt_helper.human_initial_prompt)
-    ]
-    
-    # Get structured response with both foreign and native language messages
-    structured_llm = llm_response().with_structured_output(LLMTurn)
-    response: LLMTurn = structured_llm.invoke(messages)
-    
-    # Store foreign language message with translation in metadata
+    native_language_greeting: str = get_language_greeting(prompt_helper.native_language)
+    foreign_language_greeting: str = get_language_greeting(prompt_helper.foreign_language)
+
     ai_message = AIMessage(
-        content=response.foreign_language_message,
-        additional_kwargs={"translation": response.native_language_message}
+        content=foreign_language_greeting,
+        additional_kwargs={"translation": native_language_greeting}
     )
     
     return {"messages": [ai_message]}
-
-def validate_topic(state: ChatState) -> Dict[str, Any]:
-    """
-    Validate and cleanse the user-provided topic.
-    
-    Runs after initialize_state, so prompt_helper is available.
-    
-    Validates that the topic is:
-    - Legal
-    - Not hateful or extremist
-    - Not sexually explicit
-    - Intelligible (not random words)
-    
-    Returns:
-        Updated state with validated topic and valid_topic flag.
-        If valid: topic is updated to cleaned version
-        If invalid: valid_topic is set to False
-    """
-    prompt_helper: ChatPromptHelper = state["prompt_helper"]
-
-    # Build messages for topic validation using prompt_helper
-    messages: List[BaseMessage] = [
-        SystemMessage(content=prompt_helper.cleanse_topic_system_prompt),
-        HumanMessage(content=prompt_helper.cleanse_topic_human_prompt)
-    ]
-    
-    # Get structured validation response
-    structured_llm = llm_validation().with_structured_output(LLMTopicValidation)
-    response: LLMTopicValidation = structured_llm.invoke(messages)
-
-    # Return validation result
-    if response.valid_topic:
-        # Topic is valid - update to cleaned version
-        return {
-            "topic": response.lightly_cleaned_topic,
-            "valid_topic": True
-        }
-    else:
-        # Topic is invalid - just set flag
-        return {
-            "valid_topic": False
-        }
 
 def call_model(state: ChatState) -> Dict[str, Any]:
     """

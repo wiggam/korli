@@ -9,7 +9,6 @@ from app.features.chat.nodes import (
     call_model,
     should_summarize,
     summarize_conversation,
-    validate_topic,
     correct_response
 )
 
@@ -25,7 +24,6 @@ def initialize_state(state: ChatState) -> Dict[str, Any]:
     - student_level: CEFR level (A1, A2, B1, B2, C1, C2)
     - foreign_language: Language being learned
     - native_language: Student's native language
-    - topic: Conversation topic
     
     Returns:
         Updated state with initialized prompt_helper
@@ -38,14 +36,12 @@ def initialize_state(state: ChatState) -> Dict[str, Any]:
     student_level = state.get("student_level", "B2")
     foreign_language = state.get("foreign_language", "Spanish (Spain)")
     native_language = state.get("native_language", "English (US)")
-    topic = state.get("topic", "general conversation")
     
     # Create prompt helper
     prompt_helper = ChatPromptHelper(
         student_level=student_level,
         foreign_language=foreign_language,
         native_language=native_language,
-        lesson_topic=topic
     )
     
     # Return initialized state
@@ -55,33 +51,20 @@ def initialize_state(state: ChatState) -> Dict[str, Any]:
         "correction_buffer": {} 
     }
 
-def route_after_init(state: ChatState) -> Literal["validate_topic", "call_model"]:
+def route_after_init(state: ChatState) -> Literal["generate_initial_question", "call_model"]:
     """
     Route after initialization based on conversation state.
     
     Returns:
-        - "validate_topic" if new conversation (no messages) and not yet validated
+        - "generate_initial_question" if new conversation (no messages)
         - "call_model" if ongoing conversation (has messages)
     """
     has_messages = len(state.get("messages", [])) > 0
-    is_validated = state.get("valid_topic") is not None
     
-    # For new conversations, validate topic first (if not already validated)
-    if not has_messages and not is_validated:
-        return "validate_topic"
+    if has_messages:
+        return "continue_conversation"
     
-    # For ongoing conversations, go directly to call_model
-    return "continue_conversation"
-
-def route_after_validation(state: ChatState) -> Literal["generate_initial_question", "END"]:
-    """
-    Route after topic validation.
-    
-    Returns:
-        - "generate_initial_question" if topic is valid (continue)
-        - END if topic is invalid (stop and return error)
-    """
-    return bool(state.get("valid_topic", False))
+    return "generate_initial_question"
 
 def fanout_after_init(state: ChatState) -> Dict[str, Any]:
     # No state changes; existence of edges below triggers both branches
@@ -100,10 +83,7 @@ def create_chat_graph():
     
     New Conversation:
     1. START -> initialize_state (set up prompt_helper)
-    2. initialize_state -> validate_topic (check topic validity)
-    3. validate_topic -> route based on validation result
-       - If valid: generate_initial_question -> END
-       - If invalid: END (with valid_topic=False in state)
+    2. initialize_state -> generate_initial_question (generate opening question)
     
     Ongoing Conversation:
     1. START -> initialize_state (already has prompt_helper)
@@ -122,7 +102,6 @@ def create_chat_graph():
     
     # Add nodes
     workflow.add_node("initialize_state", initialize_state)
-    workflow.add_node("validate_topic", validate_topic)
     workflow.add_node("generate_initial_question", generate_initial_question)
     workflow.add_node("fanout_after_init", fanout_after_init)
     workflow.add_node("correct_response", correct_response)
@@ -138,18 +117,8 @@ def create_chat_graph():
         "initialize_state",
         route_after_init,
         {
-            "validate_topic": "validate_topic",
+            "generate_initial_question": "generate_initial_question",
             "continue_conversation": "fanout_after_init"
-        }
-    )
-    
-    # After topic validation, route based on validity
-    workflow.add_conditional_edges(
-        "validate_topic",
-        route_after_validation,
-        {
-            True: "generate_initial_question",
-            False: END
         }
     )
     

@@ -4,48 +4,48 @@ Provides validation for supported languages across chat and lesson features.
 """
 
 from typing import List, Dict, Optional
-from enum import Enum
 
 # Language map with OpenAI-compatible codes (removed male/female voice codes)
 LANGUAGE_MAP = {
-    "Afrikaans": { "code": "af-ZA" },
-    "Arabic": { "code": "ar-XA" },
-    "Bulgarian": { "code": "bg-BG" },
-    "Catalan": { "code": "ca-ES" },
-    "Chinese": { "code": "cmn-CN" },
-    "Croatian": { "code": "hr-HR" },
-    "Czech": { "code": "cs-CZ" },
-    "Danish": { "code": "da-DK" },
-    "Dutch": { "code": "nl-NL" },
-    "English": { "code": "en-US" },
-    "Filipino": { "code": "fil-PH" },
-    "Finnish": { "code": "fi-FI" },
-    "French": { "code": "fr-FR" },
-    "German": { "code": "de-DE" },
-    "Greek": { "code": "el-GR" },
-    "Hebrew": { "code": "he-IL" },
-    "Hindi": { "code": "hi-IN" },
-    "Hungarian": { "code": "hu-HU" },
-    "Indonesian": { "code": "id-ID" },
-    "Italian": { "code": "it-IT" },
-    "Japanese": { "code": "ja-JP" },
-    "Korean": { "code": "ko-KR" },
-    "Malay": { "code": "ms-MY" },
-    "Norwegian": { "code": "nb-NO" },
-    "Polish": { "code": "pl-PL" },
-    "Portuguese (Portugal)": { "code": "pt-PT" },
-    "Portuguese (Brazil)": { "code": "pt-BR" },
-    "Romanian": { "code": "ro-RO" },
-    "Russian": { "code": "ru-RU" },
-    "Slovak": { "code": "sk-SK" },
-    "Spanish (Spain)": { "code": "es-ES" },
-    "Spanish (Mexico)": { "code": "es-MX" },
-    "Swedish": { "code": "sv-SE" },
-    "Thai": { "code": "th-TH" },
-    "Turkish": { "code": "tr-TR" },
-    "Ukrainian": { "code": "uk-UA" },
-    "Vietnamese": { "code": "vi-VN" },
+    "Afrikaans": {"code": "af-ZA", "greeting": "Hallo! Hoe gaan dit?"},
+    "Arabic": {"code": "ar-XA", "greeting": "مرحباً! كيف حالك؟"},
+    "Bulgarian": {"code": "bg-BG", "greeting": "Здравей! Как си?"},
+    "Catalan": {"code": "ca-ES", "greeting": "Hola! Com estàs?"},
+    "Chinese": {"code": "cmn-CN", "greeting": "你好！你好吗？"},
+    "Croatian": {"code": "hr-HR", "greeting": "Bok! Kako si?"},
+    "Czech": {"code": "cs-CZ", "greeting": "Ahoj! Jak se máš?"},
+    "Danish": {"code": "da-DK", "greeting": "Hej! Hvordan har du det?"},
+    "Dutch": {"code": "nl-NL", "greeting": "Hallo! Hoe gaat het?"},
+    "English": {"code": "en-US", "greeting": "Hello! How are you?"},
+    "Filipino": {"code": "fil-PH", "greeting": "Kumusta! Kamusta ka?"},
+    "Finnish": {"code": "fi-FI", "greeting": "Hei! Mitä kuuluu?"},
+    "French": {"code": "fr-FR", "greeting": "Salut ! Comment ça va ?"},
+    "German": {"code": "de-DE", "greeting": "Hallo! Wie geht’s?"},
+    "Greek": {"code": "el-GR", "greeting": "Γεια σου! Τι κάνεις;"},
+    "Hebrew": {"code": "he-IL", "greeting": "שלום! מה שלומך?"},
+    "Hindi": {"code": "hi-IN", "greeting": "नमस्ते! आप कैसे हैं?"},
+    "Hungarian": {"code": "hu-HU", "greeting": "Szia! Hogy vagy?"},
+    "Indonesian": {"code": "id-ID", "greeting": "Halo! Apa kabar?"},
+    "Italian": {"code": "it-IT", "greeting": "Ciao! Come stai?"},
+    "Japanese": {"code": "ja-JP", "greeting": "こんにちは！お元気ですか？"},
+    "Korean": {"code": "ko-KR", "greeting": "안녕하세요! 잘 지내요?"},
+    "Malay": {"code": "ms-MY", "greeting": "Hai! Apa khabar?"},
+    "Norwegian": {"code": "nb-NO", "greeting": "Hei! Hvordan har du det?"},
+    "Polish": {"code": "pl-PL", "greeting": "Cześć! Jak się masz?"},
+    "Portuguese (Portugal)": {"code": "pt-PT", "greeting": "Olá! Como estás?"},
+    "Portuguese (Brazil)": {"code": "pt-BR", "greeting": "Oi! Tudo bem?"},
+    "Romanian": {"code": "ro-RO", "greeting": "Bună! Ce mai faci?"},
+    "Russian": {"code": "ru-RU", "greeting": "Привет! Как дела?"},
+    "Slovak": {"code": "sk-SK", "greeting": "Ahoj! Ako sa máš?"},
+    "Spanish (Spain)": {"code": "es-ES", "greeting": "¡Hola! ¿Cómo estás?"},
+    "Spanish (Mexico)": {"code": "es-MX", "greeting": "¡Hola! ¿Cómo estás?"},
+    "Swedish": {"code": "sv-SE", "greeting": "Hej! Hur mår du?"},
+    "Thai": {"code": "th-TH", "greeting": "สวัสดี! สบายดีไหม?"},
+    "Turkish": {"code": "tr-TR", "greeting": "Merhaba! Nasılsın?"},
+    "Ukrainian": {"code": "uk-UA", "greeting": "Привіт! Як справи?"},
+    "Vietnamese": {"code": "vi-VN", "greeting": "Xin chào! Bạn khỏe không?"},
 }
+
 
 class LanguageValidator:
     """Service class for language validation and management."""
@@ -64,20 +64,11 @@ class LanguageValidator:
     def validate_language(language: str) -> str:
         """
         Validate a language name against supported languages.
-        
-        Args:
-            language: The language name to validate (must match exactly)
-            
-        Returns:
-            The same language name if valid
-            
-        Raises:
-            ValueError: If language is not supported
+        Returns the same language name if valid, otherwise raises ValueError.
         """
         if not language:
             raise ValueError("Language cannot be empty")
         
-        # Simple lookup - no normalization needed for dropdown selections
         if not LanguageValidator.is_language_supported(language):
             supported_languages = LanguageValidator.get_supported_languages()
             raise ValueError(
@@ -93,6 +84,13 @@ class LanguageValidator:
         validated_language = LanguageValidator.validate_language(language)
         return LANGUAGE_MAP.get(validated_language, {}).get("code")
 
+    @staticmethod
+    def get_language_greeting(language: str) -> Optional[str]:
+        """Get the default greeting in the given language."""
+        validated_language = LanguageValidator.validate_language(language)
+        return LANGUAGE_MAP.get(validated_language, {}).get("greeting")
+
+
 # Convenience functions for easy importing
 def validate_language(language: str) -> str:
     """Convenience function for language validation."""
@@ -105,3 +103,7 @@ def is_language_supported(language: str) -> bool:
 def get_supported_languages() -> List[str]:
     """Convenience function to get all supported languages."""
     return LanguageValidator.get_supported_languages()
+
+def get_language_greeting(language: str) -> Optional[str]:
+    """Convenience function to get the default greeting in a given language."""
+    return LanguageValidator.get_language_greeting(language)
