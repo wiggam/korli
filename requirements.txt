@@ -1,0 +1,18 @@
+# Env
+python-dotenv==1.0.1
+
+# LangChain 1.0 line (works with langgraph 1.x and langgraph-cli 0.4.x)
+langchain>=1.0.0,<1.1.0
+langchain-core>=1.0.0,<1.1.0
+langchain-openai>=1.0.0,<1.1.0
+
+# LangGraph + CLI (in-memory server)
+langgraph==1.0.0
+langgraph-cli[inmem]==0.4.4
+
+# Langfuse SDK v3 (use @observe / spans)
+langfuse==3.7.0
+
+# Useful/runtime deps
+tiktoken>=0.12.0
+orjson>=3.10.0
