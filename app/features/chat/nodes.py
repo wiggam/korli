@@ -7,7 +7,7 @@ from app.features.chat.state import ChatState, CorrectionRecord
 from app.features.chat.config import MESSAGES_BEFORE_SUMMARY, MESSAGES_TO_KEEP
 from app.features.prompts.chat.prompt_utils import ChatPromptHelper
 from app.features.chat.models import LLMTurn, LLMSummary, LLMResponseCorrection
-from app.services.language_validation import get_language_greeting
+from app.services.language_validation import get_language_greeting, get_language_topic
 
 def generate_initial_question(state: ChatState) -> Dict[str, Any]:
     """
@@ -22,6 +22,9 @@ def generate_initial_question(state: ChatState) -> Dict[str, Any]:
     # Build messages specifically for initial question generation
     native_language_greeting: str = get_language_greeting(prompt_helper.native_language)
     foreign_language_greeting: str = get_language_greeting(prompt_helper.foreign_language)
+    if state.get("student_level") not in ["A1", "A2"]:
+        native_language_greeting = f"{native_language_greeting} {get_language_topic(prompt_helper.native_language)}"
+        foreign_language_greeting = f"{foreign_language_greeting} {get_language_topic(prompt_helper.foreign_language)}"
 
     ai_message = AIMessage(
         content=foreign_language_greeting,

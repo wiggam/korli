@@ -16,6 +16,10 @@ class LLMTurn(BaseModel):
         ...,
         description="The same message translated into the student's native language"
     )
+    reasoning: str = Field(
+        ...,
+        description="The reasoning for the response in English"
+    )
 
 class LLMSummary(BaseModel):
     """Summary of the conversation for context management"""

@@ -2,7 +2,7 @@
 
 from typing import Literal, Dict, Any
 from langgraph.graph import StateGraph, END, START
-from app.features.chat.state import ChatState, CorrectionRecord
+from app.features.chat.state import ChatState
 from app.features.prompts.chat.prompt_utils import ChatPromptHelper
 from app.features.chat.nodes import (
     generate_initial_question,
