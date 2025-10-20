@@ -79,23 +79,37 @@ def create_chat_graph():
     """
     Create and compile the chat conversation graph.
     
+    This graph uses ASYNC nodes for LLM operations, enabling concurrent
+    request handling and better API performance.
+    
     Graph Flow:
     
     New Conversation:
     1. START -> initialize_state (set up prompt_helper)
-    2. initialize_state -> generate_initial_question (generate opening question)
+    2. initialize_state -> generate_initial_question (async - generates opening question)
+    3. -> END
     
     Ongoing Conversation:
     1. START -> initialize_state (already has prompt_helper)
-    2. initialize_state -> call_model (generate AI response)
-    3. call_model -> correct_response (correct user's previous message)
-    4. correct_response -> apply_correction (apply correction to history)
-    5. apply_correction -> check if summarization needed
-       - If yes: summarize_conversation -> END
+    2. initialize_state -> fanout_after_init (fan-out point)
+    3. Parallel execution:
+       - call_model (async - generate AI response)
+       - correct_response (async - correct user's previous message)
+    4. Both converge -> fanin_after_processing
+    5. fanin_after_processing -> check if summarization needed
+       - If yes: summarize_conversation (async) -> END
        - If no: END
     
+    Usage:
+        # Async invocation (recommended for APIs)
+        result = await chat_graph.ainvoke(input_state)
+        
+        # Streaming (async)
+        async for event in chat_graph.astream(input_state):
+            print(event)
+    
     Returns:
-        Compiled StateGraph ready for invocation
+        Compiled StateGraph ready for async invocation
     """
     # Initialize the graph with ChatState
     workflow = StateGraph(ChatState)
