@@ -33,7 +33,7 @@ def generate_initial_question(state: ChatState) -> Dict[str, Any]:
     
     return {"messages": [ai_message]}
 
-def call_model(state: ChatState) -> Dict[str, Any]:
+async def call_model(state: ChatState) -> Dict[str, Any]:
     """
     Generate a response from the LLM during ongoing conversation.
     
@@ -60,7 +60,7 @@ def call_model(state: ChatState) -> Dict[str, Any]:
         print(message)
     # Get structured response with both foreign and native language messages
     structured_llm = llm_response().with_structured_output(LLMTurn)
-    response: LLMTurn = structured_llm.invoke(messages)
+    response: LLMTurn = await structured_llm.ainvoke(messages)
     
     # Store foreign language message with translation in metadata
     ai_message = AIMessage(
@@ -79,7 +79,7 @@ def should_summarize(state: ChatState) -> bool:
     """
     return len(state["messages"]) > MESSAGES_BEFORE_SUMMARY
 
-def summarize_conversation(state: ChatState) -> Dict[str, Any]:
+async def summarize_conversation(state: ChatState) -> Dict[str, Any]:
     """
     Manage conversation history with rolling summaries.
     
@@ -113,7 +113,7 @@ def summarize_conversation(state: ChatState) -> Dict[str, Any]:
     
     # Get structured summary response
     structured_llm = llm_summary().with_structured_output(LLMSummary)
-    response: LLMSummary = structured_llm.invoke(summary_messages)
+    response: LLMSummary = await structured_llm.ainvoke(summary_messages)
     
     # Delete the old messages that were summarized
     delete_messages: List[RemoveMessage] = [RemoveMessage(id=m.id) for m in messages_to_summarize]
@@ -123,7 +123,13 @@ def summarize_conversation(state: ChatState) -> Dict[str, Any]:
         "messages": delete_messages
     }
 
-def correct_response(state: ChatState) -> Dict[str, Any]:
+async def correct_response(state: ChatState) -> Dict[str, Any]:
+    """
+    Correct the user's previous message for grammar and language errors.
+    
+    Analyzes the last user message and provides corrections if needed.
+    Stores correction information in the corrections dict keyed by message ID.
+    """
     prompt_helper: ChatPromptHelper = state["prompt_helper"]
     message: BaseMessage = state["messages"][-1]
 
@@ -138,7 +144,7 @@ def correct_response(state: ChatState) -> Dict[str, Any]:
 
     # Get structured response correction
     structured_llm = llm_response_correction().with_structured_output(LLMResponseCorrection)
-    response: LLMResponseCorrection = structured_llm.invoke(messages)
+    response: LLMResponseCorrection = await structured_llm.ainvoke(messages)
     
     correction_record: CorrectionRecord = {
         "corrected_message": response.corrected_foreign_language if response.corrected else "",
