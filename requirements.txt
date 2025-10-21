@@ -58,25 +58,26 @@ pydantic==2.12.3
 pydantic_core==2.41.4
 PyJWT==2.10.1
 python-dotenv==1.0.1
-
-# LangChain 1.0 line (works with langgraph 1.x and langgraph-cli 0.4.x)
-langchain>=1.0.0,<1.1.0
-langchain-core>=1.0.0,<1.1.0
-langchain-openai>=1.0.0,<1.1.0
-
-# LangGraph + CLI (in-memory server)
-langgraph==1.0.0
-langgraph-cli[inmem]==0.4.4
-
-# Langfuse SDK v3 (use @observe / spans)
-langfuse==3.7.0
-
-# Useful/runtime deps
-tiktoken>=0.12.0
-orjson>=3.10.0
-
-# Async HTTP client
-aiohttp
-async_timeout
-certifi
-tenacity
+PyYAML==6.0.3
+regex==2025.9.18
+requests==2.32.5
+requests-toolbelt==1.0.0
+setuptools==80.9.0
+sniffio==1.3.1
+sse-starlette==2.1.3
+starlette==0.48.0
+structlog==25.4.0
+tenacity==9.1.2
+tiktoken==0.12.0
+tqdm==4.67.1
+truststore==0.10.4
+typing-inspection==0.4.2
+typing_extensions==4.15.0
+urllib3==2.5.0
+uvicorn==0.38.0
+watchfiles==1.1.1
+wrapt==1.17.3
+xxhash==3.6.0
+yarl==1.22.0
+zipp==3.23.0
+zstandard==0.25.0
