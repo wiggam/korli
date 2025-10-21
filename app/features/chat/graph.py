@@ -11,6 +11,8 @@ from app.features.chat.nodes import (
     summarize_conversation,
     correct_response
 )
+from langfuse.langchain import CallbackHandler as LangfuseCallbackHandler
+
 
 
 def initialize_state(state: ChatState) -> Dict[str, Any]:
@@ -161,7 +163,8 @@ def create_chat_graph():
     workflow.add_edge("summarize_conversation", END)
     
     # Compile the graph (Langfuse SDK tracing is added in nodes.py)
-    return workflow.compile()
+    lf_handler = LangfuseCallbackHandler()
+    return workflow.compile().with_config({"callbacks": [lf_handler]})
 
 
 # Create the compiled graph instance
