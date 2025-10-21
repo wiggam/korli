@@ -1,4 +1,4 @@
-from typing import TypedDict, Annotated, Optional, Any, Dict
+from typing import TypedDict, Annotated, Optional, Any, Dict, Literal
 from langchain_core.messages import BaseMessage
 from langgraph.graph import MessagesState, add_messages
 from app.features.prompts.chat.prompt_utils import ChatPromptHelper
@@ -7,7 +7,8 @@ from app.features.prompts.chat.prompt_utils import ChatPromptHelper
 class CorrectionRecord(TypedDict, total=False):
     corrected_message: str          # final foreign-language text (corrected or same as original)
     translation: str                # translation of corrected_message
-    changed: bool                   # whether a change was applied
+    corrected: bool                 # whether a change was applied
+    audio_url: Optional[str]        # Supabase URL of correction audio (if corrected)
 
 
 class ChatState(MessagesState):
@@ -27,6 +28,8 @@ class ChatState(MessagesState):
     student_level: Optional[str]
     foreign_language: Optional[str]
     native_language: Optional[str]
+    tutor_gender: Optional[Literal["male", "female"]]
+    student_gender: Optional[Literal["male", "female"]]
     
     # Core state
     summary: str
