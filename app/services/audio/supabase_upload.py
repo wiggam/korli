@@ -115,7 +115,7 @@ if __name__ == "__main__":
         
         try:
             # Step 1: Generate audio using OpenAI TTS
-            test_text = "Hello! This is a test of the OpenAI text-to-speech system. The audio will be uploaded to Supabase storage."
+            test_text = "Очень хорошо! Ты голоден? Что будешь есть?"
             print(f"\n📝 Generating speech from text:")
             print(f"   Text: {test_text[:50]}...")
             print(f"   Voice: alloy")
@@ -123,8 +123,8 @@ if __name__ == "__main__":
             
             audio_bytes = await generate_speech(
                 text=test_text,
-                voice="alloy",
-                model="tts-1",
+                voice="ash",
+                model="tts-1-hd",
                 speed=1.0
             )
             
