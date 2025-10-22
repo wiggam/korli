@@ -14,12 +14,27 @@ async def generate_audio(
     voice: str = "alloy",
     model: str = "gpt-4o-mini-tts",
     speed: float = 1.0,
+    instructions: Optional[str] = None,
     storage: Storage = "none",
     filename_prefix: str = "tts",
     thread_id: Optional[str] = None,
     upsert: bool = False,
 ) -> Dict[str, Optional[str]]:
     """
+    Generate audio from text with optional storage.
+    
+    Parameters:
+      text: The text to convert to speech
+      voice: Voice to use (alloy, echo, fable, onyx, nova, shimmer, coral, etc.)
+      model: TTS model (gpt-4o-mini-tts, tts-1, tts-1-hd)
+      speed: Speed of speech (0.25 to 4.0)
+      instructions: Instructions for controlling speech (only for gpt-4o-mini-tts)
+                    Examples: "Speak cheerfully", "Use a British accent", "Whisper"
+      storage: Where to store the audio (supabase, memory, none)
+      filename_prefix: Prefix for the generated filename
+      thread_id: Optional thread ID for organizing files
+      upsert: Whether to upsert when uploading to Supabase
+    
     Returns:
       {
         "url": str | None,      # e.g. Supabase public URL
@@ -27,7 +42,13 @@ async def generate_audio(
         "bytes_len": int,       # diagnostic
       }
     """
-    audio_bytes = await generate_speech(text=text, voice=voice, model=model, speed=speed)
+    audio_bytes = await generate_speech(
+        text=text, 
+        voice=voice, 
+        model=model, 
+        speed=speed,
+        instructions=instructions
+    )
 
     if storage == "supabase":
         # Create unique filename: timestamp + UUID for guaranteed uniqueness

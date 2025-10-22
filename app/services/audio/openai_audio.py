@@ -69,7 +69,8 @@ async def close_session() -> None:
 async def _tts_generate(text: str,
                         voice: str = "alloy",
                         model: str = TTS_MODEL,
-                        speed: float = 1.0) -> bytes:
+                        speed: float = 1.0,
+                        instructions: Optional[str] = None) -> bytes:
     """Calls OpenAI TTS API and returns audio bytes."""
     url = "https://api.openai.com/v1/audio/speech"
     headers = {
@@ -78,11 +79,15 @@ async def _tts_generate(text: str,
     }
     
     payload = {
-        "model": model,  # tts-1 or tts-1-hd
+        "model": model,  # tts-1, tts-1-hd, or gpt-4o-mini-tts
         "input": text,
         "voice": voice,  # alloy, echo, fable, onyx, nova, shimmer
         "speed": speed   # 0.25 to 4.0
     }
+    
+    # Add instructions parameter (only supported by gpt-4o-mini-tts)
+    if instructions is not None:
+        payload["instructions"] = instructions
     
     async with aio_timeout(REQUEST_TIMEOUT):
         async with _get_session().post(url, headers=headers, json=payload) as r:
@@ -96,7 +101,8 @@ async def generate_speech(
     *,
     voice: str = "alloy",
     model: str = TTS_MODEL,
-    speed: float = 1.0
+    speed: float = 1.0,
+    instructions: Optional[str] = None
 ) -> bytes:
     """
     Generate speech audio from text using OpenAI TTS.
@@ -108,9 +114,13 @@ async def generate_speech(
     voice : str
         Voice to use: alloy, echo, fable, onyx, nova, shimmer
     model : str
-        Model to use: tts-1 (faster) or tts-1-hd (higher quality)
+        Model to use: tts-1 (faster), tts-1-hd (higher quality), or gpt-4o-mini-tts (with instructions)
     speed : float
         Speed of speech (0.25 to 4.0, default 1.0)
+    instructions : str, optional
+        Instructions for controlling speech characteristics (only supported by gpt-4o-mini-tts).
+        Examples: "Speak in a cheerful and positive tone", "Use a British accent", 
+        "Whisper softly", "Speak with excitement"
         
     Returns
     -------
@@ -118,7 +128,7 @@ async def generate_speech(
         MP3 audio data
     """
     async with STT_SEM:
-        return await _tts_generate(text, voice=voice, model=model, speed=speed)
+        return await _tts_generate(text, voice=voice, model=model, speed=speed, instructions=instructions)
 
 
 # ───────────────────────────────────────
