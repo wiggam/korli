@@ -2,12 +2,14 @@
 
 from typing import Dict, Any, List, Optional
 from langchain_core.messages import SystemMessage, HumanMessage, RemoveMessage, BaseMessage, AIMessage
+from langchain_core.runnables import RunnableConfig
 from app.services.llm import llm_response, llm_summary, llm_response_correction
 from app.features.chat.state import ChatState, CorrectionRecord
-from app.features.chat.config import MESSAGES_BEFORE_SUMMARY, MESSAGES_TO_KEEP
+from app.features.chat.config import MESSAGES_BEFORE_SUMMARY, MESSAGES_TO_KEEP, GENDER_TO_VOICE
 from app.features.prompts.chat.prompt_utils import ChatPromptHelper
 from app.features.chat.models import LLMTurn, LLMSummary, LLMResponseCorrection
 from app.services.language_validation import get_language_greeting, get_language_topic
+from app.services.audio import generate_audio
 
 def generate_initial_question(state: ChatState) -> Dict[str, Any]:
     """
@@ -33,7 +35,7 @@ def generate_initial_question(state: ChatState) -> Dict[str, Any]:
     
     return {"messages": [ai_message]}
 
-async def call_model(state: ChatState) -> Dict[str, Any]:
+async def call_model(state: ChatState, config: RunnableConfig) -> Dict[str, Any]:
     """
     Generate a response from the LLM during ongoing conversation.
     
@@ -61,11 +63,26 @@ async def call_model(state: ChatState) -> Dict[str, Any]:
     # Get structured response with both foreign and native language messages
     structured_llm = llm_response().with_structured_output(LLMTurn)
     response: LLMTurn = await structured_llm.ainvoke(messages)
+
+    # Get thread_id from config for organizing audio files
+    thread_id = config.get("configurable", {}).get("thread_id")
+
+    # Generate audio for the response and upload to Supabase
+    audio_result = await generate_audio(
+        text=response.foreign_language_message,
+        voice=GENDER_TO_VOICE.get(state.get("tutor_gender", "male"), "ash"),
+        filename_prefix="chat",
+        thread_id=thread_id,
+        storage="supabase"
+    )
     
-    # Store foreign language message with translation in metadata
+    # Store foreign language message with translation and audio URL in metadata
     ai_message = AIMessage(
         content=response.foreign_language_message,
-        additional_kwargs={"translation": response.native_language_message}
+        additional_kwargs={
+            "translation": response.native_language_message,
+            "audio_url": audio_result["url"]
+        }
     )
     
     return {"messages": [ai_message]}
@@ -123,7 +140,7 @@ async def summarize_conversation(state: ChatState) -> Dict[str, Any]:
         "messages": delete_messages
     }
 
-async def correct_response(state: ChatState) -> Dict[str, Any]:
+async def correct_response(state: ChatState, config: RunnableConfig) -> Dict[str, Any]:
     """
     Correct the user's previous message for grammar and language errors.
     
@@ -145,11 +162,25 @@ async def correct_response(state: ChatState) -> Dict[str, Any]:
     # Get structured response correction
     structured_llm = llm_response_correction().with_structured_output(LLMResponseCorrection)
     response: LLMResponseCorrection = await structured_llm.ainvoke(messages)
+
+    # Get thread_id from config for organizing audio files
+    thread_id = config.get("configurable", {}).get("thread_id")
+
+    # Generate audio, if necessary
+    if response.corrected:
+        audio_result = await generate_audio(
+            text=response.corrected_foreign_language,
+            voice=GENDER_TO_VOICE.get(state.get("tutor_gender", "female"), "shimmer"),
+            filename_prefix="chat",
+            thread_id=thread_id,
+            storage="supabase"
+        )
     
     correction_record: CorrectionRecord = {
         "corrected_message": response.corrected_foreign_language if response.corrected else "",
         "translation": response.native_language_message,
         "corrected": response.corrected,
+        "audio_url": audio_result["url"] if response.corrected else None
     }
 
     return {"corrections": {message.id: correction_record}}

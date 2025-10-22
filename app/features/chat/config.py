@@ -10,3 +10,7 @@ MESSAGES_TO_KEEP: Final[int] = 20
 """Number of recent messages to keep after summarization"""
 
 
+# Audio Configuration
+GENDER_TO_VOICE = {"male": "ash", "female": "shimmer"}
+
+
