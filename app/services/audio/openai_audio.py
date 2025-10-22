@@ -28,6 +28,7 @@ from asyncio import timeout as aio_timeout
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from ..http_utils import create_tcp_connector
+from config import TTS_MODEL, STT_MODEL
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 REQUEST_TIMEOUT = 30
@@ -67,7 +68,7 @@ async def close_session() -> None:
 )
 async def _tts_generate(text: str,
                         voice: str = "alloy",
-                        model: str = "tts-1",
+                        model: str = TTS_MODEL,
                         speed: float = 1.0) -> bytes:
     """Calls OpenAI TTS API and returns audio bytes."""
     url = "https://api.openai.com/v1/audio/speech"
@@ -94,7 +95,7 @@ async def generate_speech(
     text: str,
     *,
     voice: str = "alloy",
-    model: str = "tts-1",
+    model: str = TTS_MODEL,
     speed: float = 1.0
 ) -> bytes:
     """
@@ -131,13 +132,14 @@ async def generate_speech(
 )
 async def _whisper(bytes_data: bytes,
                    lang_code: str | None = None,
-                   prompt: str | None = None) -> str:
+                   prompt: str | None = None,
+                   model: str = STT_MODEL) -> str:
     """Calls Whisper-v3 API and returns plain text."""
     url = "https://api.openai.com/v1/audio/transcriptions"
     headers = {"Authorization": f"Bearer {OPENAI_API_KEY}"}
 
     form = aiohttp.FormData()
-    form.add_field("model", "whisper-1")          # OpenAI always routes to latest
+    form.add_field("model", model)
     form.add_field("file", bytes_data,
                    filename="speech.mp3",
                    content_type="audio/mpeg")

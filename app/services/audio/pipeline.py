@@ -12,7 +12,7 @@ async def generate_audio(
     *,
     text: str,
     voice: str = "alloy",
-    model: str = "tts-1",
+    model: str = "gpt-4o-mini-tts",
     speed: float = 1.0,
     storage: Storage = "none",
     filename_prefix: str = "tts",
