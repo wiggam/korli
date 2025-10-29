@@ -22,10 +22,11 @@ def initialize_state(state: ChatState) -> Dict[str, Any]:
     This node checks if the state needs initialization (new conversation)
     and creates the prompt_helper from the input parameters.
     
-    For new conversations via LangGraph Studio, provide:
+    For new conversations, provide:
     - student_level: CEFR level (A1, A2, B1, B2, C1, C2)
     - foreign_language: Language being learned
     - native_language: Student's native language
+    - tutor_gender: Optional tutor gender preference (affects audio voice)
     
     Returns:
         Updated state with initialized prompt_helper
@@ -34,10 +35,11 @@ def initialize_state(state: ChatState) -> Dict[str, Any]:
     if state.get("prompt_helper") is not None:
         return {}  # Already initialized, no changes needed
     
-    # Get initialization parameters from state
-    student_level = state.get("student_level", "B2")
-    foreign_language = state.get("foreign_language", "Spanish (Spain)")
-    native_language = state.get("native_language", "English (US)")
+    # Get initialization parameters from state with sensible defaults
+    student_level = state.get("student_level")
+    foreign_language = state.get("foreign_language")
+    native_language = state.get("native_language")
+    tutor_gender = state.get("tutor_gender")
     
     # Create prompt helper
     prompt_helper = ChatPromptHelper(
@@ -49,17 +51,18 @@ def initialize_state(state: ChatState) -> Dict[str, Any]:
     # Return initialized state
     return {
         "prompt_helper": prompt_helper,
+        "tutor_gender": tutor_gender,
         "summary": state.get("summary", ""),
-        "correction_buffer": {} 
+        "corrections": {} 
     }
 
-def route_after_init(state: ChatState) -> Literal["generate_initial_question", "call_model"]:
+def route_after_init(state: ChatState) -> Literal["generate_initial_question", "continue_conversation"]:
     """
     Route after initialization based on conversation state.
     
     Returns:
         - "generate_initial_question" if new conversation (no messages)
-        - "call_model" if ongoing conversation (has messages)
+        - "continue_conversation" if ongoing conversation (has messages)
     """
     has_messages = len(state.get("messages", [])) > 0
     
@@ -162,10 +165,13 @@ def create_chat_graph():
     # After summarization, end (return to user for next response)
     workflow.add_edge("summarize_conversation", END)
     
-    # Compile the graph (Langfuse SDK tracing is added in nodes.py)
-    lf_handler = LangfuseCallbackHandler()
-    return workflow.compile().with_config({"callbacks": [lf_handler]})
+    # Return the uncompiled workflow for runtime compilation with checkpointer
+    return workflow
 
 
-# Create the compiled graph instance
-chat_graph = create_chat_graph()
+# Create the workflow (uncompiled, to be compiled with checkpointer in runtime)
+chat_workflow = create_chat_graph()
+
+# Create compiled version with callbacks for LangGraph Studio (langgraph dev)
+lf_handler = LangfuseCallbackHandler()
+chat_graph = chat_workflow.compile().with_config({"callbacks": [lf_handler]})

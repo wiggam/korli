@@ -28,7 +28,7 @@ from asyncio import timeout as aio_timeout
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from ..http_utils import create_tcp_connector
-from config import TTS_MODEL, STT_MODEL
+from .config import TTS_MODEL, STT_MODEL
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 REQUEST_TIMEOUT = 30
